@@ -1,9 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import * as userRepository from "../repositories/user.repository";
-import { BadRequestError } from "../utils/errors/app.error";
+import { BadRequestError, NotFoundError } from "../utils/errors/app.error";
 import { processImage, uploadImage } from "../utils/helpers/imageUpload.utils";
 import fileUpload from "express-fileupload";
+
 
 export const addUserHandler = async (
   req: Request<{}, {}, Prisma.UserCreateInput>,
@@ -43,5 +44,36 @@ export const uploadProfilePictureHandler = async (
   res.status(200).json({
     message: "Profile picture uploaded successfully",
     profilePictureUrl,
+  });
+};
+
+export const updateUserProfileHandler = async (
+  req: Request<{}, {}, Prisma.UserCreateInput>,
+  res: Response
+) => {
+  const userId = req.user!.id; // Get user ID from authenticated user
+  const updatedUser = await userRepository.updateUserProfile(userId, req.body);
+
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully.",
+    data: updatedUser,
+  });
+};
+
+
+
+export const getUserByIdHandler = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = await userRepository.getUserById(id);
+
+  if (!user) {
+    throw new NotFoundError("User not found.");
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "User retrieved successfully.",
+    data: user,
   });
 };

@@ -1,6 +1,7 @@
+import { Prisma } from "@prisma/client";
 import crypto from "crypto";
 import prisma from "../prisma/client";
-import { Prisma } from "@prisma/client";
+import { BadRequestError } from "../utils/errors/app.error";
 
 export const findUserByEmail = async (email: string) => {
   return await prisma.user.findUnique({
@@ -21,4 +22,53 @@ export const createUser = async (userData: Prisma.UserCreateInput) => {
   });
 
   return newUser;
+};
+
+export const updateUserProfile = async (
+  userId: string,
+  data: Prisma.UserCreateInput
+) => {
+ 
+  if (data.email) {
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        email: data.email,
+        id: { not: userId }, 
+      },
+    });
+
+    if (existingUser) {
+      throw new BadRequestError("This email address is already in use.");
+    }
+  }
+
+  return prisma.user.update({
+    where: { id: userId },
+    data,
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      phone: true,
+      address: true,
+      role: true,
+      
+    },
+  });
+};
+
+export const getUserById = async (userId: string) => {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      phone: true,
+      address: true,
+      role: true,
+      profilePictureUrl: true,
+      isActive: true,
+    },
+  });
 };

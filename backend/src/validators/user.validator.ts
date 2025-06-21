@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { UserRole } from "@prisma/client";
 
-export const createUserSchema = z.object({
+export const userProfileSchema = z.object({
   fullName: z.string().min(1, { message: "Full name is required" }),
   email: z
     .string()
@@ -12,3 +12,5 @@ export const createUserSchema = z.object({
     message: "Role is required",
   }),
 });
+
+
