@@ -5,34 +5,50 @@ import {
   getUserByIdHandler,
   updateUserProfileHandler,
   uploadProfilePictureHandler,
+  getAllUsersHandler,
+  deactivateUserHandler,
 } from "../../controllers/user.controller";
 import {
   isAuthenticated,
   isAuthorized,
 } from "../../middlewares/auth.middleware";
-import { validateRequestBody } from "../../validators";
-import { userProfileSchema } from "../../validators/user.validator";
+import { validateRequestBody, validateQueryParams } from "../../validators";
+import {
+  userProfileSchema,
+  getAllUsersSchema,
+} from "../../validators/user.validator";
 
 const userRouter = express.Router();
 
-userRouter.post(
-  "/",
-  isAuthenticated,
-  isAuthorized([UserRole.ADMIN]),
-  validateRequestBody(userProfileSchema),
-  addUserHandler
-);
+userRouter
+  .route("/")
+  .post(
+    isAuthenticated,
+    isAuthorized([UserRole.ADMIN]),
+    validateRequestBody(userProfileSchema),
+    addUserHandler
+  )
+  .get(
+    isAuthenticated,
+    isAuthorized([UserRole.ADMIN]),
+    validateQueryParams(getAllUsersSchema),
+    getAllUsersHandler
+  );
 
-userRouter.post("/upload-profile-picture", uploadProfilePictureHandler);
+userRouter.route("/upload-profile-picture").post(uploadProfilePictureHandler);
 
 userRouter
-  .route("/profile")
+  .route("/profile/:id")
+  .get(isAuthenticated, getUserByIdHandler)
   .put(
     isAuthenticated,
     validateRequestBody(userProfileSchema),
     updateUserProfileHandler
+  )
+  .delete(
+    isAuthenticated,
+    isAuthorized([UserRole.ADMIN]),
+    deactivateUserHandler
   );
-
-userRouter.get("/profile/:id", isAuthenticated, getUserByIdHandler);
 
 export default userRouter;

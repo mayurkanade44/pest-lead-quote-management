@@ -1,10 +1,14 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { Request, Response } from "express";
 import * as userRepository from "../repositories/user.repository";
-import { BadRequestError, NotFoundError } from "../utils/errors/app.error";
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+} from "../utils/errors/app.error";
 import { processImage, uploadImage } from "../utils/helpers/imageUpload.utils";
 import fileUpload from "express-fileupload";
-
+import { GetAllUsersQuery } from "../types/user.type";
 
 export const addUserHandler = async (
   req: Request<{}, {}, Prisma.UserCreateInput>,
@@ -47,11 +51,14 @@ export const uploadProfilePictureHandler = async (
   });
 };
 
-export const updateUserProfileHandler = async (
-  req: Request<{}, {}, Prisma.UserCreateInput>,
-  res: Response
-) => {
+export const updateUserProfileHandler = async (req: Request, res: Response) => {
   const userId = req.user!.id; // Get user ID from authenticated user
+  const role = req.user!.role;
+
+  if (role !== UserRole.ADMIN && userId !== req.params.id) {
+    throw new ForbiddenError("You are not authorized to update this user.");
+  }
+
   const updatedUser = await userRepository.updateUserProfile(userId, req.body);
 
   res.status(200).json({
@@ -60,8 +67,6 @@ export const updateUserProfileHandler = async (
     data: updatedUser,
   });
 };
-
-
 
 export const getUserByIdHandler = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -74,6 +79,31 @@ export const getUserByIdHandler = async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: "User retrieved successfully.",
+    data: user,
+  });
+};
+
+export const getAllUsersHandler = async (req: Request, res: Response) => {
+  const query = req.query as GetAllUsersQuery;
+  const result = await userRepository.getAllUsers(query);
+  res.status(200).json({
+    success: true,
+    message: "Users retrieved successfully.",
+    data: result,
+  });
+};
+
+export const deactivateUserHandler = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = await userRepository.deactivateUser(id);
+
+  if (!user) {
+    throw new NotFoundError("User not found.");
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "User deactivated successfully.",
     data: user,
   });
 };

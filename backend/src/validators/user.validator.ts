@@ -13,4 +13,10 @@ export const userProfileSchema = z.object({
   }),
 });
 
-
+export const getAllUsersSchema = z.object({
+  page: z.string().optional(),
+  limit: z.string().optional(),
+  role: z.nativeEnum(UserRole).optional(),
+  isActive: z.enum(["true", "false"]).optional(),
+  search: z.string().optional(),
+});
