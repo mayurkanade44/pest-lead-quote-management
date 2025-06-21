@@ -12,3 +12,33 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum UserRole {
+  ADMIN
+  BACK_OFFICE
+  SALES
+  AGENT
+}
+
+model User {
+  id                     String    @id @default(cuid())
+  fullName               String
+  email                  String    @unique
+  password               String?
+  passwordToken          String?
+  passwordTokenExpiresAt DateTime?
+  phone                  String?
+  address                String
+  role                   UserRole  @default(BACK_OFFICE)
+  profilePictureUrl      String?
+  profileQr              String?
+  isActive               Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  // Indexes for performance
+  @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("users")
+}
