@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import * as userRepository from "../repositories/user.repository";
 import { BadRequestError } from "../utils/errors/app.error";
-import { processImage, uploadImage } from "../utils/helpers/imageUpload";
+import { processImage, uploadImage } from "../utils/helpers/imageUpload.utils";
 import fileUpload from "express-fileupload";
 
 export const addUserHandler = async (
