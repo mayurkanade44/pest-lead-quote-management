@@ -1,14 +1,16 @@
 import { Request, Response } from "express";
-import logger from "../config/logger.config";
-import { authenticateUser, generateAuthToken } from "../utils/helpers/auth.utils";
-import { LoginInput } from "../types/auth.type";
+import { z } from "zod";
 import { serverConfig } from "../config";
+import logger from "../config/logger.config";
+import * as authRepository from "../repositories/auth.repository";
+import { generateAuthToken } from "../utils/helpers/auth.utils";
+import { loginSchema, setupPasswordSchema } from "../validators/auth.validator";
 
 export const loginHandler = async (
-  req: Request<{}, {}, LoginInput>,
+  req: Request<{}, {}, z.infer<typeof loginSchema>>,
   res: Response
 ) => {
-  const user = await authenticateUser(req.body);
+  const user = await authRepository.authenticateUser(req.body);
 
   const token = generateAuthToken({
     userId: user.id,
@@ -39,5 +41,17 @@ export const logoutHandler = (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: "Logout successful",
+  });
+};
+
+export const setupPasswordHandler = async (
+  req: Request<{}, {}, z.infer<typeof setupPasswordSchema>>,
+  res: Response
+) => {
+  await authRepository.setupPassword(req.body);
+
+  res.status(200).json({
+    success: true,
+    message: "Password has been set up successfully.",
   });
 };
