@@ -1,13 +1,12 @@
-import { Request, Response } from "express";
-import logger from "../config/logger.config";
-import * as userRepository from "../repositories/user.repository";
-import { CreateUserInput } from "../types/user.type";
-import { uploadImageToCloudinary } from "../utils/helpers/imageUpload";
-import { BadRequestError } from "../utils/errors/app.error";
 import { Prisma } from "@prisma/client";
+import { Request, Response } from "express";
+import * as userRepository from "../repositories/user.repository";
+import { BadRequestError } from "../utils/errors/app.error";
+import { processImage, uploadImage } from "../utils/helpers/imageUpload";
+import fileUpload from "express-fileupload";
 
 export const addUserHandler = async (
-  req: Request<{}, {}, CreateUserInput>,
+  req: Request<{}, {}, Prisma.UserCreateInput>,
   res: Response
 ) => {
   const existingUser = await userRepository.findUserByEmail(req.body.email);
@@ -15,22 +14,34 @@ export const addUserHandler = async (
     throw new BadRequestError("User already exists");
   }
 
-  let profilePictureUrl: string | undefined;
-
-  if (req.file) {
-    logger.info("Profile picture found, uploading to Cloudinary");
-    profilePictureUrl = await uploadImageToCloudinary(req.file);
-    logger.info(`Profile picture uploaded successfully: ${profilePictureUrl}`);
+  if (!req.body.profilePictureUrl || req.body.profilePictureUrl.length <= 10) {
+    req.body.profilePictureUrl =
+      "https://res.cloudinary.com/dv3uzwxy6/image/upload/v1750505737/pest-leadquotation/profile-pics/profile_1750505735431.png";
   }
 
-  const userData: Prisma.UserCreateInput & { profilePictureUrl?: string } = {
-    ...req.body,
-    ...(profilePictureUrl && { profilePictureUrl }),
-  };
-
-  await userRepository.createUser(userData);
+  await userRepository.createUser(req.body);
 
   res.status(201).json({
     message: "User created successfully",
+  });
+};
+
+export const uploadProfilePictureHandler = async (
+  req: Request,
+  res: Response
+) => {
+  if (!req.files || !req.files.profilePicture) {
+    throw new BadRequestError("No file provided");
+  }
+
+  const file = req.files.profilePicture as fileUpload.UploadedFile;
+  await processImage(file);
+  const profilePictureUrl = await uploadImage(
+    file.tempFilePath,
+    "pest-leadquotation/profile-pics"
+  );
+  res.status(200).json({
+    message: "Profile picture uploaded successfully",
+    profilePictureUrl,
   });
 };
