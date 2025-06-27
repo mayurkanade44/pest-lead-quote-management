@@ -1,11 +1,20 @@
 import { LogOut, User } from "lucide-react";
-import { useLogout } from "../hooks/useAuth";
+import { useLogoutMutation } from "../services";
+import { useAuth } from "../contexts/AuthContext";
 
 const Dashboard = () => {
-  const logoutMutation = useLogout();
+  const { user, logout } = useAuth();
+
+  const logoutMutation = useLogoutMutation({
+    onSuccess: () => {
+      // Update auth context
+      logout(false); // Don't show toast since mutation already shows one
+      console.log("Goodbye!");
+    },
+  });
 
   const handleLogout = () => {
-    logoutMutation.mutate();
+    logoutMutation.mutate(undefined);
   };
 
   return (
@@ -23,16 +32,16 @@ const Dashboard = () => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center text-sm text-gray-700">
                 <User className="w-4 h-4 mr-2" />
-                Welcome back!
+                Welcome back, {user?.fullName}!
               </div>
 
               <button
                 onClick={handleLogout}
-                disabled={logoutMutation.isPending}
+                disabled={logoutMutation.isLoading}
                 className="flex items-center px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                {logoutMutation.isPending ? "Logging out..." : "Logout"}
+                {logoutMutation.isLoading ? "Logging out..." : "Logout"}
               </button>
             </div>
           </div>

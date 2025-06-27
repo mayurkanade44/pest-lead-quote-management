@@ -3,6 +3,8 @@ import { z } from "zod";
 import { serverConfig } from "../config";
 import logger from "../config/logger.config";
 import * as authRepository from "../repositories/auth.repository";
+import { getUserById } from "../repositories/user.repository";
+import { NotFoundError } from "../utils/errors/app.error";
 import { generateAuthToken } from "../utils/helpers/auth.utils";
 import { loginSchema, setupPasswordSchema } from "../validators/auth.validator";
 
@@ -53,5 +55,26 @@ export const setupPasswordHandler = async (
   res.status(200).json({
     success: true,
     message: "Password has been set up successfully.",
+  });
+};
+
+export const getMeHandler = async (req: Request, res: Response) => {
+  const user = await getUserById(req.user!.id);
+
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  const userDetails = {
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role,
+  };
+
+  res.status(200).json({
+    success: true,
+    message: "User details retrieved successfully",
+    data: { user: userDetails },
   });
 };

@@ -1,16 +1,69 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Apple, Globe, Linkedin, Lock, Mail, UserCircle } from "lucide-react";
-import { useLogin, type LoginFormValues } from "../../hooks/useAuth";
+import {
+  Globe,
+  Lock,
+  Mail,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  FileText,
+  TrendingUp,
+  Shield,
+} from "lucide-react";
+import { useLoginMutation, type LoginFormValues } from "../../services";
+import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
-const loginSchema = z.object({
+export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(5, "Password must be at least 5 characters"),
   remember: z.boolean().optional(),
 });
 
+const carouselSlides = [
+  {
+    id: 1,
+    icon: Users,
+    title: "Smart Lead Management",
+    subtitle: "Capture, Track & Convert",
+    description:
+      "Effortlessly manage all your pest control leads in one place. Track customer inquiries, follow-ups, and conversion status with our intelligent dashboard.",
+    bgColor: "bg-gradient-to-br from-green-50 to-emerald-100",
+    iconColor: "text-green-600",
+    stats: { label: "Average Lead Response", value: "< 2 hours" },
+  },
+  {
+    id: 2,
+    icon: FileText,
+    title: "Instant Quotations",
+    subtitle: "Professional & Fast",
+    description:
+      "Generate professional quotations in seconds. Customize pricing, services, and terms while maintaining consistency across all your proposals.",
+    bgColor: "bg-gradient-to-br from-blue-50 to-indigo-100",
+    iconColor: "text-blue-600",
+    stats: { label: "Quotation Generation", value: "30 seconds" },
+  },
+  {
+    id: 3,
+    icon: TrendingUp,
+    title: "Conversion Analytics",
+    subtitle: "Data-Driven Growth",
+    description:
+      "Monitor your success with detailed analytics. Track conversion rates, revenue trends, and identify opportunities to grow your pest control business.",
+    bgColor: "bg-gradient-to-br from-purple-50 to-violet-100",
+    iconColor: "text-purple-600",
+    stats: { label: "Average Conversion Rate", value: "65%" },
+  },
+];
+
 const LoginPage = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
+
   const {
     register,
     handleSubmit,
@@ -19,185 +72,224 @@ const LoginPage = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  const loginMutation = useLogin();
+  const loginMutation = useLoginMutation({
+    onSuccess: (response) => {
+      login(response.data.user);
+      navigate("/dashboard");
+      console.log("Welcome!", response.data.user.fullName);
+    },
+    onError: (error) => {
+      console.error("Login error:", error);
+    },
+  });
 
   const onSubmit = (data: LoginFormValues) => {
     loginMutation.mutate(data);
   };
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide(
+      (prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length
+    );
+  };
+
+  const currentSlideData = carouselSlides[currentSlide];
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      <div className="flex flex-col justify-between w-1/2 p-8 bg-white">
-        <div>
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 bg-purple-200 rounded-full"></div>
-            <div className="text-sm">
-              Don't have an account?{" "}
-              <a href="#" className="font-semibold text-purple-600">
-                Register
-              </a>
+    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
+      {/* Login Section */}
+      <div className="w-full lg:w-2/5 bg-white flex flex-col">
+        {/* Header/Branding */}
+        <div className="flex-shrink-0 bg-white lg:bg-transparent shadow-sm lg:shadow-none">
+          <div className="flex items-center justify-center p-4 lg:px-8 lg:pt-20">
+            <Shield className="w-10 h-10 lg:w-12 lg:h-12 text-green-600 mr-3" />
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-800">
+                Pest Lead Gen
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500">
+                Professional Lead Management
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col items-center">
-          <UserCircle className="w-16 h-16 text-gray-300" />
-          <h1 className="mt-4 text-3xl font-semibold">Login to your account</h1>
-          <p className="mt-2 text-gray-600">Enter your details to login.</p>
-
-          <div className="flex mt-8 space-x-4">
-            <button className="p-3 border rounded-md">
-              <Apple />
-            </button>
-            <button className="p-3 border rounded-md">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6"
-                viewBox="0 0 48 48"
-              >
-                <path
-                  fill="#FFC107"
-                  d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039L38.804 9.81C34.551 6.225 29.623 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
-                />
-                <path
-                  fill="#FF3D00"
-                  d="m6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.842-5.842C34.551 6.225 29.623 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"
-                />
-                <path
-                  fill="#4CAF50"
-                  d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.221 0-9.58-3.684-11.171-8.584l-6.522 5.025C9.507 39.583 16.227 44 24 44z"
-                />
-                <path
-                  fill="#1976D2"
-                  d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.012 35.846 44 30.138 44 24c0-1.341-.138-2.65-.389-3.917z"
-                />
-              </svg>
-            </button>
-            <button className="p-3 border rounded-md">
-              <Linkedin />
-            </button>
-          </div>
-
-          <div className="my-8 text-center">OR</div>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm">
-            <div className="relative mb-4">
-              <Mail className="absolute w-5 h-5 text-gray-400 left-3 top-3" />
-              <input
-                {...register("email")}
-                placeholder="Email Address*"
-                className="w-full p-2 pl-10 border rounded-md"
-              />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.email.message}
-                </p>
-              )}
+        {/* Login Form */}
+        <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-4 lg:py-0">
+          <div className="max-w-md mx-auto w-full lg:max-w-sm">
+            <div className="text-center lg:text-left mb-8 lg:mb-10">
+              <h2 className="text-2xl sm:text-3xl lg:text-2xl font-semibold text-gray-800 mb-2">
+                Welcome Back
+              </h2>
+              <p className="text-gray-600">
+                Sign in to manage your leads and quotations
+              </p>
             </div>
-            <div className="relative mb-4">
-              <Lock className="absolute w-5 h-5 text-gray-400 left-3 top-3" />
-              <input
-                {...register("password")}
-                type="password"
-                placeholder="Password*"
-                className="w-full p-2 pl-10 border rounded-md"
-              />
-              {errors.password && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center justify-between mb-6 text-sm">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  {...register("remember")}
-                  className="mr-2"
-                />
-                Keep me logged in
-              </label>
-              <a href="#" className="text-purple-600">
-                Forgot password?
-              </a>
-            </div>
-            <button
-              type="submit"
-              className="w-full p-3 text-white bg-purple-600 rounded-md"
-              disabled={loginMutation.isPending}
+
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-4 lg:space-y-4"
             >
-              {loginMutation.isPending ? "Logging in..." : "Login"}
-            </button>
-          </form>
+              <div className="relative">
+                <Mail className="absolute w-5 h-5 text-gray-400 left-3 top-3" />
+                <input
+                  {...register("email")}
+                  placeholder="Email Address*"
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-base lg:text-sm"
+                />
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="relative">
+                <Lock className="absolute w-5 h-5 text-gray-400 left-3 top-3" />
+                <input
+                  {...register("password")}
+                  type="password"
+                  placeholder="Password*"
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-base lg:text-sm"
+                />
+                {errors.password && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between text-sm pt-2">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    {...register("remember")}
+                    className="mr-2 text-green-600 rounded focus:ring-green-500"
+                  />
+                  Keep me logged in
+                </label>
+                <a href="#" className="text-green-600 hover:text-green-700">
+                  Forgot password?
+                </a>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full p-3 text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg hover:cursor-pointer hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg text-base lg:text-sm font-medium mt-6"
+                disabled={loginMutation.isLoading}
+              >
+                {loginMutation.isLoading ? "Signing in..." : "Sign In"}
+              </button>
+            </form>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <div>© 2024 Synergy HR</div>
+        {/* Footer */}
+
+        <div className="hidden lg:flex items-center justify-between text-sm px-10 py-4">
+          <div>© 2025 Pest Lead Gen</div>
           <div className="flex items-center">
-            <Globe className="w-4 h-4 mr-2" />
+            <Globe className="w-4 h-4 mr-2 text-blue-500" />
             ENG
           </div>
         </div>
       </div>
-      <div className="flex-col items-center justify-center hidden w-1/2 p-8 bg-gray-100 md:flex">
-        <div className="p-8 bg-white rounded-lg shadow-md w-96">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Time Off</h2>
-            <a href="#" className="text-sm text-purple-600">
-              See All
-            </a>
-          </div>
-          <div className="flex flex-col items-center my-4">
-            <div className="relative w-40 h-20">
-              <div className="absolute w-40 h-20 border-t-8 border-l-8 border-r-8 border-b-8 border-purple-500 rounded-full border-b-transparent border-l-transparent border-r-transparent transform -rotate-45"></div>
-              <div className="absolute text-3xl font-bold -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-                10
+
+      {/* Carousel Section */}
+      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-0 relative">
+        {/* Feature Showcase */}
+        <div className="max-w-md lg:max-w-lg w-full">
+          <div
+            className={`${currentSlideData.bgColor} transition-all duration-500 rounded-xl lg:rounded-2xl shadow-lg lg:shadow-xl p-6 lg:p-8 relative overflow-hidden`}
+          >
+            {/* Background Pattern */}
+            <div className="absolute top-0 right-0 w-20 h-20 lg:w-32 lg:h-32 opacity-10">
+              <currentSlideData.icon className="w-full h-full" />
+            </div>
+
+            {/* Main Content */}
+            <div className="relative z-10">
+              <div className="flex items-center mb-4 lg:mb-6">
+                <div
+                  className={`p-2 lg:p-3 ${currentSlideData.iconColor} bg-white rounded-lg shadow-md`}
+                >
+                  <currentSlideData.icon className="w-6 h-6 lg:w-8 lg:h-8" />
+                </div>
+                <div className="ml-3 lg:ml-4">
+                  <h3 className="text-lg lg:text-xl font-bold text-gray-800">
+                    {currentSlideData.title}
+                  </h3>
+                  <p
+                    className={`text-sm font-medium ${currentSlideData.iconColor}`}
+                  >
+                    {currentSlideData.subtitle}
+                  </p>
+                </div>
               </div>
-              <div className="absolute text-xs text-gray-500 -translate-x-1/2 bottom-2 left-1/2">
-                OUT OF 20
+
+              <p className="text-gray-700 mb-4 lg:mb-6 text-sm lg:text-base leading-relaxed">
+                {currentSlideData.description}
+              </p>
+
+              {/* Stats */}
+              <div className="bg-white/50 backdrop-blur-sm rounded-lg p-3 lg:p-4 border border-white/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs lg:text-sm text-gray-600">
+                    {currentSlideData.stats.label}
+                  </span>
+                  <span
+                    className={`text-lg lg:text-2xl font-bold ${currentSlideData.iconColor}`}
+                  >
+                    {currentSlideData.stats.value}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-          <div>
-            <div className="flex items-center justify-between p-2 mt-2 bg-orange-100 rounded-md">
-              <div>
-                <p>Jan 15, 2024</p>
-                <p className="text-xs text-gray-500">Casual</p>
-              </div>
-              <div className="px-2 py-1 text-xs text-orange-700 bg-orange-200 rounded-full">
-                Pending
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-2 mt-2 bg-green-100 rounded-md">
-              <div>
-                <p>Jan 15, 2024</p>
-                <p className="text-xs text-gray-500">Casual</p>
-              </div>
-              <div className="px-2 py-1 text-xs text-green-700 bg-green-200 rounded-full">
-                Confirmed
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-2 mt-2 bg-red-100 rounded-md">
-              <div>
-                <p>Feb 12, 2024</p>
-                <p className="text-xs text-gray-500">Casual</p>
-              </div>
-              <div className="px-2 py-1 text-xs text-red-700 bg-red-200 rounded-full">
-                Rejected
-              </div>
-            </div>
+
+          {/* Dots Indicator */}
+          <div className="flex justify-center space-x-2 mt-4 lg:mt-6">
+            {carouselSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`w-2 h-2 lg:w-3 lg:h-3 rounded-full transition-all ${
+                  index === currentSlide
+                    ? "bg-green-600 w-6 lg:w-8"
+                    : "bg-gray-300 hover:bg-gray-400"
+                }`}
+              />
+            ))}
           </div>
         </div>
-        <div className="mt-8 text-center">
-          <h3 className="text-xl font-semibold">
-            Stay in Control of Your Time Off
-          </h3>
-          <p className="mt-2 text-gray-600">
-            Track your time off balance and manage requests with the Time Off
-            widget,
-            <br />
-            ensuring a stress-free experience.
+
+        {/* Bottom Text */}
+        <div className="mt-8 text-center max-w-md">
+          <h4 className="text-xl font-semibold text-gray-800 mb-2">
+            Transform Your Pest Control Business
+          </h4>
+          <p className="text-gray-600 text-sm lg:text-base">
+            Join hundreds of pest control professionals who trust Pest Lead Gen
+            to streamline their operations and boost their success rates.
           </p>
+        </div>
+      </div>
+      <div className="lg:hidden flex items-center justify-between text-sm text-gray-500 px-5 py-4">
+        <div>© 2025 Pest Lead Gen</div>
+        <div className="flex items-center">
+          <Globe className="w-4 h-4 mr-2" />
+          ENG
         </div>
       </div>
     </div>

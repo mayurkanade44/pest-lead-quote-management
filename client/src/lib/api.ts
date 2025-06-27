@@ -11,18 +11,32 @@ export const api = axios.create({
   },
 });
 
-// Response interceptor for better error handling
+// Global logout function (will be set by AuthContext)
+let globalLogout: (() => void) | null = null;
+
+export const setGlobalLogout = (logoutFn: () => void) => {
+  globalLogout = logoutFn;
+};
+
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.code === "ERR_NETWORK") {
+    // Handle authentication errors
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.log("Authentication failed, logging out...");
+
+      if (globalLogout) {
+        globalLogout();
+      }
+
+      error.message = "Session expired. Please login again.";
+    } else if (error.code === "ERR_NETWORK") {
       error.message = "Network error. Please check if the server is running.";
-    } else if (error.response?.status === 401) {
-      error.message =
-        "Invalid credentials. Please check your email and password.";
     } else if (error.response?.status === 500) {
       error.message = "Server error. Please try again later.";
     }
+
     return Promise.reject(error);
   }
 );
@@ -32,16 +46,18 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
 export interface LoginResponse {
   success: boolean;
   message: string;
   data: {
-    user: {
-      id: string;
-      fullName: string;
-      email: string;
-      role: string;
-    };
+    user: User;
   };
 }
 
@@ -51,4 +67,6 @@ export const authAPI = {
 
   logout: (): Promise<{ success: boolean; message: string }> =>
     api.post("/auth/logout").then((res) => res.data),
+
+  me: (): Promise<LoginResponse> => api.get("/auth/me").then((res) => res.data),
 };
