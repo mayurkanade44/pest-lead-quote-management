@@ -1,10 +1,12 @@
 import bcrypt from "bcryptjs";
-import prisma from "../prisma/client";
-import { BadRequestError, UnauthorizedError } from "../utils/errors/app.error";
-import { loginSchema, setupPasswordSchema } from "../validators/auth.validator";
 import { z } from "zod";
+import prisma from "../prisma/client";
+import {
+  BadRequestError,
+  UnauthorizedError
+} from "../utils/errors/app.error";
+import { loginSchema, setupPasswordSchema } from "../validators/auth.validator";
 
-// This function was here before, needed for login
 export const authenticateUser = async (
   loginData: z.infer<typeof loginSchema>
 ) => {

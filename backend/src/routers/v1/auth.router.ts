@@ -3,6 +3,7 @@ import {
   loginHandler,
   logoutHandler,
   setupPasswordHandler,
+  getMeHandler,
 } from "../../controllers/auth.controller";
 import { validateRequestBody } from "../../validators";
 import {
@@ -22,5 +23,7 @@ authRouter.post(
 );
 
 authRouter.post("/logout", isAuthenticated, logoutHandler);
+
+authRouter.get("/me", isAuthenticated, getMeHandler);
 
 export default authRouter;
