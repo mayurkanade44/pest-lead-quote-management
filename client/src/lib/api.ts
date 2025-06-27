@@ -1,5 +1,6 @@
 import axios from "axios";
 import { config } from "../config";
+import { logger } from "./logger";
 
 const API_BASE_URL = `${config.API_BASE_URL}/api/v1`;
 
@@ -18,13 +19,34 @@ export const setGlobalLogout = (logoutFn: () => void) => {
   globalLogout = logoutFn;
 };
 
-
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log successful API calls
+    logger.apiCall(
+      response.config.method?.toUpperCase() || "UNKNOWN",
+      response.config.url || "unknown",
+      response.status
+    );
+    return response;
+  },
   (error) => {
+    const method = error.config?.method?.toUpperCase() || "UNKNOWN";
+    const url = error.config?.url || "unknown";
+    const status = error.response?.status || 0;
+
+    // Log API errors
+    logger.apiCall(method, url, status, undefined, {
+      errorMessage: error.message,
+      errorCode: error.code,
+    });
+
     // Handle authentication errors
     if (error.response?.status === 401 || error.response?.status === 403) {
-      console.log("Authentication failed, logging out...");
+      logger.warn("Authentication failed, initiating logout", {
+        url,
+        method,
+        status,
+      });
 
       if (globalLogout) {
         globalLogout();

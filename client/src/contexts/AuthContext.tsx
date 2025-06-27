@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { authAPI, setGlobalLogout, type User } from "../lib/api";
 import { toast } from "sonner";
+import { logger } from "../lib/logger";
 
 interface AuthContextType {
   user: User | null;
@@ -40,7 +41,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   const logout = (showMessage = true) => {
-    console.log("Logging out user...");
+    logger.info("User logout initiated", {
+      userId: user?.id,
+      showMessage,
+      currentPath: location.pathname,
+    });
 
     setUser(null);
     queryClient.clear(); // Clear all cache
@@ -98,6 +103,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [userData, error, isLoading, isInitialized, location.pathname]);
 
   const login = (userData: User) => {
+    logger.info("User login successful", {
+      userId: userData.id,
+      email: userData.email,
+      role: userData.role,
+    });
+
     setUser(userData);
     queryClient.setQueryData(["auth", "currentUser"], userData);
   };
